@@ -23,9 +23,13 @@ let current = -1;
 
 const map = L.map("map", { zoomControl: true }).setView([52.1, 5.1], 7);
 
-L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+/* OpenStreetMap's own tiles. No API key, no account, no provider that can
+   start watermarking you later. Note the URL has no {s} subdomain — OSM
+   deprecated a/b/c and asks for the plain hostname. Their tile server is
+   donation-funded, so attribution below is required, not decorative. */
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
-  attribution: "&copy; OpenStreetMap &middot; &copy; CARTO"
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
 
 /* ---------- text helpers ----------
@@ -168,9 +172,11 @@ function buildMedia(p) {
   const slides = frames.map((f, n) =>
     f.kind === "photo"
       ? `<div class="media-frame${n === 0 ? " is-shown" : ""}">
-           <img src="${f.src}" alt="" loading="lazy" onerror="this.closest('.media-frame').dataset.broken='1'">
+           <img class="wash" src="${f.src}" alt="" aria-hidden="true" loading="lazy">
+           <img class="shot" src="${f.src}" alt="" loading="lazy"
+                onerror="this.closest('.media-frame').dataset.broken='1'">
          </div>`
-      : `<div class="media-frame${n === 0 ? " is-shown" : ""}" data-pano-src="${f.src}"></div>`
+      : `<div class="media-frame is-pano${n === 0 ? " is-shown" : ""}" data-pano-src="${f.src}"></div>`
   ).join("");
 
   const dots = frames.length > 1
@@ -230,7 +236,7 @@ function openCard(i) {
       `<h2 class="card-title"><span>${escapeHtml(p.name)}</span></h2>` +
       `<div class="card-text">${p.text}</div>` +
       (showLink
-        ? `<a class="card-sv" href="${panoLinkHref(p)}" target="_blank" rel="noopener">Párate de nuevo en este lugar &rarr;</a>`
+        ? `<a class="card-sv" href="${panoLinkHref(p)}" target="_blank" rel="noopener">Stand here again &rarr;</a>`
         : "") +
       '<div class="card-nav">' +
         '<button class="navbtn" data-go="-1" type="button">&larr;</button>' +

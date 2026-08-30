@@ -1,0 +1,364 @@
+:root{
+  --yellow:      #ffe01b;
+  --yellow-deep: #f2c500;
+  --sky:         #a8e4ff;
+  --sky-deep:    #1ba9f5;
+  --navy:        #0e2440;
+  --white:       #ffffff;
+
+  --display: "Bricolage Grotesque", system-ui, sans-serif;
+  --body:    "DM Sans", system-ui, sans-serif;
+
+  /* ── THE KNOB ──────────────────────────────────────────────────
+     How tall a photo is allowed to get. Photos keep their own shape
+     and are never cropped — this only caps how much of the card a
+     tall portrait shot is allowed to take before the story starts
+     getting pushed off screen.
+       bigger  → 60vh, 620px   more picture, more scrolling
+       smaller → 34vh, 300px   more story visible at once
+     Mobile has its own value further down, in the media query.      */
+  --media-max: min(48vh, 440px);
+}
+
+*{ box-sizing: border-box; }
+html, body{ height:100%; margin:0; }
+body{
+  font-family: var(--body);
+  color: var(--navy);
+  background: var(--sky);
+  -webkit-font-smoothing: antialiased;
+}
+:focus-visible{ outline:3px solid var(--navy); outline-offset:3px; }
+
+/* the markdown blocks are data — JS reads them, they never display */
+.stop{ display:none; }
+
+/* ---------- MAP ---------- */
+#map{ position:fixed; inset:0; background:var(--sky); }
+
+/* pale sky-blue paper. tiles are pushed to near-white and tinted, so the
+   yellow markers sit at maximum contrast against everything behind them */
+.leaflet-tile-pane{
+  filter: grayscale(1) brightness(1.06) contrast(.88)
+          sepia(.45) hue-rotate(168deg) saturate(2.1);
+}
+
+.leaflet-control-attribution{
+  background: rgba(255,255,255,.86) !important;
+  color: var(--navy) !important;
+  font-family: var(--body) !important;
+  font-size: 10px !important;
+}
+.leaflet-control-attribution a{ color: var(--sky-deep) !important; }
+
+.leaflet-control-zoom a{
+  background: var(--white) !important;
+  color: var(--navy) !important;
+  border: 0 !important;
+  font-weight: 700;
+}
+.leaflet-control-zoom a:hover{ background: var(--yellow) !important; }
+.leaflet-bar{
+  border: 3px solid var(--navy) !important;
+  box-shadow: 3px 3px 0 var(--navy) !important;
+}
+
+/* ---------- MARKERS ---------- */
+.pin-wrap{
+  position:relative;
+  width:32px; height:42px;
+  animation: drop .5s cubic-bezier(.2,1.1,.4,1) backwards;
+  animation-delay: calc(var(--i) * 90ms);
+}
+
+/* the ground shadow. sells the pin as standing on the map rather than
+   floating over it, and it's what makes the hover lift legible */
+.pin-wrap::after{
+  content:"";
+  position:absolute; left:50%; bottom:1px;
+  width:13px; height:5px;
+  transform: translateX(-50%);
+  background: rgba(14,36,64,.32);
+  border-radius:50%;
+  filter: blur(1.5px);
+  transition: all .22s cubic-bezier(.2,.8,.3,1);
+}
+
+.pin{
+  position:absolute; top:0; left:1px;
+  width:30px; height:30px;
+  display:grid; place-items:center;
+  cursor:pointer;
+  background: var(--yellow);
+  border: 3px solid var(--navy);
+  border-radius: 50% 50% 50% 2px;   /* teardrop: one sharp corner */
+  transform: rotate(-45deg);         /* points the sharp corner down */
+  transition: transform .22s cubic-bezier(.2,.8,.3,1), background .22s;
+}
+
+.pin-num{
+  transform: rotate(45deg);          /* cancel the pin's rotation */
+  font-family: var(--display);
+  font-weight:700; font-size:13px; line-height:1;
+  color: var(--navy);
+  pointer-events:none;
+}
+
+.pin-wrap:hover .pin{ transform: rotate(-45deg) translate(-3px, -3px); }
+.pin-wrap:hover::after{ width:16px; opacity:.45; filter: blur(2.5px); }
+
+/* already opened — she can see at a glance what she's read */
+.pin.is-read{ background: var(--sky); }
+
+/* the one currently open */
+.pin.is-active{
+  background: var(--sky-deep);
+  transform: rotate(-45deg) scale(1.18) translate(-2px,-2px);
+}
+.pin.is-active .pin-num{ color: var(--white); }
+
+@keyframes drop{
+  from{ transform: translateY(-22px); opacity:0; }
+  to  { transform:none; opacity:1; }
+}
+
+/* ---------- CARD ---------- */
+#story{
+  position:fixed; z-index:600;
+  left:20px; bottom:20px;
+  width: min(360px, calc(100% - 40px));
+  max-height: 60vh;
+  overflow-y:auto;
+  overflow-x:hidden;   /* a card should never scroll sideways */
+  background: var(--white);
+  border: 3px solid var(--navy);
+  border-radius: 4px;
+  box-shadow: 7px 7px 0 var(--sky-deep);
+  animation: pop .28s cubic-bezier(.2,.9,.3,1);
+}
+#story[hidden]{ display:none; }
+
+@keyframes pop{
+  from{ transform: translateY(14px); opacity:0; }
+  to  { transform:none; opacity:1; }
+}
+
+.card-bar{
+  height:12px;
+  background: repeating-linear-gradient(
+    -45deg, var(--yellow) 0 9px, var(--yellow-deep) 9px 18px
+  );
+  border-bottom:3px solid var(--navy);
+}
+
+/* ---------- ERROR STATE ---------- */
+#oops{
+  position:fixed; z-index:700;
+  left:20px; top:20px;
+  width:min(360px, calc(100% - 40px));
+}
+#oops[hidden]{ display:none; }
+.oops-box{
+  background: var(--yellow);
+  border:3px solid var(--navy);
+  border-radius:4px;
+  box-shadow:7px 7px 0 var(--navy);
+  padding:16px 18px;
+}
+.oops-box strong{
+  display:block;
+  font-family: var(--display);
+  font-size:17px;
+  margin-bottom:6px;
+}
+.oops-box p{ margin:0; font-size:14px; line-height:1.5; }
+.oops-box code{
+  background: var(--navy); color: var(--yellow);
+  padding:1px 5px; border-radius:2px; font-size:13px;
+}
+
+/* ---------- MEDIA: photos and Street View share one frame ----------
+   The frame has no fixed height. The visible slide sits in normal flow
+   and the others are absolutely positioned on top of it, so the card
+   takes its height from whichever image is showing. Photos are scaled
+   to fit whole — never cropped — and a blurred copy of the same photo
+   fills whatever space is left over. */
+
+.card-media{
+  position:relative;
+  background: var(--sky);
+  border-bottom:3px solid var(--navy);
+  overflow:hidden;
+}
+
+.media-frame{
+  position:absolute; inset:0;
+  opacity:0; pointer-events:none;
+}
+.media-frame.is-shown{
+  position:relative; inset:auto;
+  opacity:1; pointer-events:auto;
+  animation: fadein .22s ease;
+}
+@keyframes fadein{ from{ opacity:0; } to{ opacity:1; } }
+
+/* Every image in the frame is constrained, whether or not it carries a
+   class. width:100% makes a photo scale UP to fill the card as well as
+   down; height follows the image's own ratio and is then capped;
+   object-fit:contain guarantees the whole picture stays visible — when
+   the cap bites on a tall portrait the picture shrinks rather than being
+   cut, and the blurred copy shows through beside it. */
+.media-frame img{
+  display:block;
+  width:100%;
+  max-width:100%;
+  height:auto;
+  max-height: var(--media-max);
+  object-fit: contain;
+}
+
+/* the sharp photo, on top */
+.media-frame img.shot{ position:relative; z-index:1; }
+
+/* the blurred copy behind it, filling the leftover space */
+.media-frame img.wash{
+  position:absolute; inset:0; z-index:0;
+  width:100%; height:100%;
+  max-height:none;
+  object-fit:cover;
+  filter: blur(22px) saturate(1.35);
+  transform: scale(1.2);
+  opacity:.9;
+}
+
+/* an iframe has no natural size, so the panorama gets a set shape */
+.media-frame.is-pano{ aspect-ratio: 16 / 10; }
+.media-frame.is-pano iframe{
+  display:block; width:100%; height:100%; border:0;
+}
+
+/* a missing photo file collapses quietly instead of showing a broken icon */
+.media-frame[data-broken="1"]{ min-height:120px; }
+.media-frame[data-broken="1"] img{ display:none; }
+
+.media-dots{
+  position:absolute; right:9px; bottom:9px; z-index:2;
+  display:flex; align-items:center; gap:5px;
+}
+.dot{
+  width:13px; height:13px; padding:0;
+  background: var(--white);
+  border:2px solid var(--navy);
+  border-radius:50%;
+  cursor:pointer;
+  box-shadow:2px 2px 0 rgba(14,36,64,.4);
+}
+.dot.is-pano{
+  width:auto; height:17px;
+  border-radius:9px;
+  padding:0 6px;
+  font-family: var(--body); font-weight:700;
+  font-size:9px; letter-spacing:.06em;
+  color: var(--navy);
+}
+.dot.is-on{ background: var(--yellow); }
+.dot:hover{ background: var(--sky-deep); }
+
+.card-sv{
+  display:inline-block;
+  margin-top:16px;
+  padding:9px 14px;
+  background: var(--yellow);
+  color: var(--navy);
+  border:2px solid var(--navy);
+  border-radius:3px;
+  box-shadow:3px 3px 0 var(--navy);
+  text-decoration:none;
+  font-weight:700; font-size:12px;
+  letter-spacing:.06em;
+}
+.card-sv:hover{ background: var(--sky-deep); color: var(--white); }
+.card-sv:active{ transform: translate(2px,2px); box-shadow:1px 1px 0 var(--navy); }
+
+.card-body{ padding:20px 22px 20px; }
+
+.card-place{
+  font-size:11px; font-weight:700;
+  letter-spacing:.16em; text-transform:uppercase;
+  color: var(--sky-deep);
+  margin:0 0 10px;
+}
+
+/* the signature: the title gets highlighted, like someone marked it in a book */
+.card-title{
+  font-family: var(--display);
+  font-weight:700;
+  font-size:26px; line-height:1.15;
+  letter-spacing:-.02em;
+  margin:0 0 16px;
+}
+.card-title span{
+  background-image: linear-gradient(var(--yellow), var(--yellow));
+  background-repeat: no-repeat;
+  background-size: 0% 42%;
+  background-position: 0 82%;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  padding: 0 2px;
+}
+#story.is-lit .card-title span{
+  animation: swipe .5s .12s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes swipe{ to{ background-size:100% 42%; } }
+
+.card-text p{ margin:0 0 12px; line-height:1.6; font-size:15.5px; }
+.card-text p:last-child{ margin-bottom:0; }
+.card-text em{ font-style:normal; background:var(--sky); padding:0 3px; }
+
+.card-nav{
+  display:flex; align-items:center; gap:6px;
+  margin-top:20px; padding-top:16px;
+  border-top:2px solid var(--navy);
+}
+.navbtn{
+  width:34px; height:34px;
+  background: var(--white); color: var(--navy);
+  border:2px solid var(--navy); border-radius:3px;
+  font-size:14px; cursor:pointer; line-height:1;
+}
+.navbtn:hover:not(:disabled){ background: var(--yellow); }
+.navbtn:disabled{ opacity:.25; cursor:default; }
+
+.card-count{
+  font-size:12px; font-weight:700;
+  color: var(--sky-deep);
+  padding:0 4px;
+}
+
+.card-close{
+  margin-left:auto;
+  background: var(--navy); color: var(--white);
+  border:0; border-radius:3px;
+  padding:10px 16px; cursor:pointer;
+  font-family: var(--body); font-weight:700;
+  font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+}
+.card-close:hover{ background: var(--sky-deep); }
+
+@media (max-width:640px){
+  /* less vertical room on a phone, so photos get a tighter cap than
+     desktop. Kept above the card's own width (~360px) so that square
+     photos still fill it edge to edge instead of being letterboxed. */
+  :root{ --media-max: min(46vh, 380px); }
+
+  #story{
+    left:12px; right:12px; bottom:12px; width:auto;
+    box-shadow:5px 5px 0 var(--sky-deep);
+  }
+  .card-title{ font-size:22px; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+  .card-title span{ background-size:100% 42%; }
+}
