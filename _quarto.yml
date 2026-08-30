@@ -1,0 +1,27 @@
+project:
+  type: default
+  output-dir: docs
+  resources:
+    - map.js
+    - places.xlsx
+    - photos/
+    - .nojekyll
+
+format:
+  html:
+    theme: none
+    page-layout: custom
+    css: styles.css
+    toc: false
+    include-in-header:
+      - text: |
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=DM+Sans:wght@400;700&display=swap" rel="stylesheet">
+    include-after-body:
+      - text: |
+          <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+          <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+          <script src="map.js"></script>

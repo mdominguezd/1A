@@ -1,0 +1,13 @@
+---
+pagetitle: "Our map"
+---
+
+<!-- All content now lives in places.xlsx. Open that file in a spreadsheet
+     app — Excel, Numbers, or Google Sheets — never in a text editor.
+     Nothing in this file needs editing. -->
+
+```{=html}
+<div id="map"></div>
+<div id="story" hidden></div>
+<div id="oops" hidden></div>
+```
